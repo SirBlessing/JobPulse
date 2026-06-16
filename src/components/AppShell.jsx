@@ -40,10 +40,12 @@ function SiteFooter() {
 
         <nav className="site-footer__links" aria-label="Footer links">
           <Link to="/">Home</Link>
+          <Link to="/categories">All Categories</Link>
+          <Link to="/saved">Saved Jobs</Link>
           <Link to="/category/remote-friendly">Remote Jobs</Link>
           <Link to="/category/no-experience">No Experience</Link>
-          <Link to="/category/high-salary">High Salary</Link>
-          <Link to="/category/tech-roles">Tech Roles</Link>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/contact">Contact Us</Link>
         </nav>
 
         <div className="site-footer__divider" />

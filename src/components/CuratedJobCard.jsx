@@ -1,10 +1,12 @@
 /**
  * components/CuratedJobCard.jsx
- * Compact feed card. Click anywhere → /job/:id detail page.
+ * Feed card — click body → detail page, bookmark button → save/unsave.
+ * No account needed. Saved state persists in localStorage.
  */
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { timeAgo } from '../utils/format.js'
+import { isSaved, toggleSaved } from '../utils/saved.js'
 
 const CATEGORY_META = {
   'no-experience':   { emoji: '🔰', label: 'No Experience'  },
@@ -24,8 +26,10 @@ function daysLeft(d) {
   return Math.ceil((new Date(d) - new Date()) / 86400000)
 }
 
-export default function CuratedJobCard({ job }) {
+export default function CuratedJobCard({ job, onUnsave }) {
   const navigate = useNavigate()
+  const [saved, setSaved] = useState(() => isSaved(job._id))
+
   const {
     _id, title, company, nigerianState,
     salaryNaira, honestTake, scamAlertText,
@@ -33,17 +37,24 @@ export default function CuratedJobCard({ job }) {
     applicationMethod,
   } = job
 
-  const days    = daysLeft(closingDate)
-  const urgent  = days !== null && days <= 3 && days >= 0
-  const closed  = days !== null && days < 0
+  const days   = daysLeft(closingDate)
+  const urgent = days !== null && days <= 3 && days >= 0
+  const closed = days !== null && days < 0
 
-  const go = () => navigate(`/job/${_id}`)
+  const goToDetail = () => navigate(`/job/${_id}`)
+
+  const handleBookmark = (e) => {
+    e.stopPropagation() // don't navigate
+    const nowSaved = toggleSaved(job)
+    setSaved(nowSaved)
+    if (!nowSaved && onUnsave) onUnsave(_id) // let SavedPage remove from list
+  }
 
   return (
-    <article className="card" onClick={go}
+    <article className="card" onClick={goToDetail}
       role="button" tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && go()}
-      aria-label={`${title} at ${company}`}
+      onKeyDown={e => e.key === 'Enter' && goToDetail()}
+      aria-label={`${title} at ${company} — click to view details`}
       style={{ cursor: 'pointer' }}>
 
       {/* Banners */}
@@ -67,8 +78,7 @@ export default function CuratedJobCard({ job }) {
       )}
 
       <div className="card__body">
-
-        {/* Header: title left, badges right */}
+        {/* Header */}
         <div className="card__header">
           <div className="card__title-wrap">
             <h2 className="card__title">{title}</h2>
@@ -86,17 +96,17 @@ export default function CuratedJobCard({ job }) {
           </div>
         </div>
 
-        {/* Closing date pill */}
+        {/* Closing pill */}
         {closingDate && !closed && (
           <div style={{ marginBottom: 'var(--sp-sm)' }}>
-            <span className={`closing-pill ${urgent ? 'closing-pill--urgent' : ''}`}>
+            <span className={`closing-pill${urgent ? ' closing-pill--urgent' : ''}`}>
               <span className="material-symbols-outlined">event</span>
               Closes {new Date(closingDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
           </div>
         )}
 
-        {/* Honest Take preview — 2 lines max */}
+        {/* Honest Take preview */}
         {honestTake && (
           <div className="curator-box" style={{ marginBottom: 'var(--sp-sm)' }}>
             <div className="curator-box__eyebrow">
@@ -112,29 +122,40 @@ export default function CuratedJobCard({ job }) {
           <div className="card__chips">
             {smartCategories.map(slug => {
               const m = CATEGORY_META[slug]
-              return (
-                <span key={slug} className="badge badge-category">
-                  {m ? `${m.emoji} ${m.label}` : slug}
-                </span>
-              )
+              return <span key={slug} className="badge badge-category">{m ? `${m.emoji} ${m.label}` : slug}</span>
             })}
           </div>
         )}
 
         {/* Footer */}
         <div className="card__footer">
-          <span className="card__apply-hint">
-            <span className="material-symbols-outlined">
-              {applicationMethod === 'email' ? 'mail' : 'open_in_new'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
+            {/* Bookmark button */}
+            <button
+              className={`bookmark-btn${saved ? ' bookmark-btn--saved' : ''}`}
+              onClick={handleBookmark}
+              aria-label={saved ? 'Remove from saved' : 'Save this job'}
+              title={saved ? 'Remove from saved' : 'Save for later'}
+            >
+              <span className="material-symbols-outlined"
+                style={{ fontVariationSettings: saved ? "'FILL' 1" : "'FILL' 0" }}>
+                bookmark
+              </span>
+              {saved ? 'Saved' : 'Save'}
+            </button>
+            {/* Apply method hint */}
+            <span className="card__apply-hint">
+              <span className="material-symbols-outlined">
+                {applicationMethod === 'email' ? 'mail' : 'open_in_new'}
+              </span>
+              {applicationMethod === 'email' ? 'Email' : 'Link'}
             </span>
-            {applicationMethod === 'email' ? 'Apply via Email' : 'Apply via Link'}
-          </span>
+          </div>
           <span className="card__view-link">
             View Details
             <span className="material-symbols-outlined">arrow_forward</span>
           </span>
         </div>
-
       </div>
     </article>
   )
