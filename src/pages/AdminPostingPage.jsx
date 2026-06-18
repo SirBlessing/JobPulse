@@ -83,15 +83,24 @@ export default function AdminPostingPage() {
   useEffect(() => { if (tab === 'manage' && authed) loadJobs() }, [tab, authed, loadJobs])
 
   const handleAuth = async e => {
-    e.preventDefault(); setAuthError('')
+    e.preventDefault()
+    setAuthError('')
     if (!token.trim()) { setAuthError('Please enter your admin token.'); return }
     setAuthLoading(true)
-    try { await adminFetch('/jobs/__ping__', 'GET', null, token) }
-    catch (err) {
-      if (err.message === 'Route not found.') { setAuthed(true); setAuthLoading(false); return }
-      setAuthError('Invalid token — access denied.')
+    try {
+      // /api/jobs/ping is protected by adminAuth middleware.
+      // 200 = token valid, 401 = wrong token, network error = backend down.
+      await adminFetch('/jobs/ping', 'GET', null, token)
+      setAuthed(true)
+    } catch (err) {
+      if (err.message.includes('reach') || err.message.includes('server')) {
+        setAuthError('Cannot reach the backend. Make sure it is running on port 5000.')
+      } else {
+        setAuthError('Invalid token — access denied.')
+      }
+    } finally {
+      setAuthLoading(false)
     }
-    setAuthLoading(false)
   }
 
   const handleField = e => {

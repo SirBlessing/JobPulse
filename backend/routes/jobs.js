@@ -23,6 +23,10 @@ const {
 /* ── Public ─────────────────────────────────────────────── */
 router.get('/',                        getJobs)
 router.get('/category/:categorySlug',  getByCategory)  // must be BEFORE /:id
+
+/* ── Admin token verification ping (must be before /:id) ── */
+router.get('/ping', adminAuth, (_req, res) => res.json({ ok: true }))
+
 router.get('/:id',                     getJobById)
 
 /* ── Admin ──────────────────────────────────────────────── */
