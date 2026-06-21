@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import AppShell from '../components/AppShell.jsx'
 import CuratedJobCard from '../components/CuratedJobCard.jsx'
-import { getSavedJobs } from '../utils/saved.js'
+import { getSavedJobs } from '../utils/Saved.js'
 
 export default function SavedPage() {
   const [jobs, setJobs] = useState([])
